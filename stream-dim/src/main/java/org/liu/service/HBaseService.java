@@ -6,7 +6,7 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.jetbrains.annotations.NotNull;
-import org.liu.util.HBaseConnectionUtil;
+import org.liu.common.util.HBaseConnectionUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;

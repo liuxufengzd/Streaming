@@ -1,15 +1,15 @@
-package org.liu.tool;
+package org.liu.app;
 
 import org.apache.spark.sql.SparkSession;
 import org.liu.common.app.AppBase;
 
-public class DeltaOptimize extends AppBase {
+public class DwdLogApp extends AppBase {
     public static void main(String[] args) {
-        new DeltaOptimize().start(args, 1);
+        new DwdLogApp().start(args, 4);
     }
 
     @Override
     public void etl(SparkSession spark, String[] args) {
-        spark.sql("OPTIMIZE " + args[0]);
+
     }
 }

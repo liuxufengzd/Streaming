@@ -7,7 +7,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
 import org.liu.common.app.AppBase;
-import org.liu.util.StreamUtils;
+import org.liu.common.util.StreamUtil;
 
 import java.util.concurrent.TimeoutException;
 
@@ -88,12 +88,12 @@ public class DimProcessApp extends AppBase {
                     .createIfNotExists(spark)
                     .addColumns(dataSchema)
                     .addColumn("time", TimestampType)
-                    .location(StreamUtils.getTablePath(DIM_LAYER, DIM_PROCESS_TABLE))
+                    .location(StreamUtil.getTablePath(DIM_LAYER, DIM_PROCESS_TABLE))
                     .tableName(DELTA_DB + "." + DIM_PROCESS_TABLE)
                     .execute();
 
             source.writeStream()
-                    .option("checkpointLocation", StreamUtils.getTableCheckpointPath(DIM_LAYER, DIM_PROCESS_TABLE))
+                    .option("checkpointLocation", StreamUtil.getTableCheckpointPath(DIM_LAYER, DIM_PROCESS_TABLE))
                     .foreachBatch((src, batchId) -> {
                         if (!src.isEmpty()) {
                             table.as("target").merge(src.as("source"), "target.id = source.id")

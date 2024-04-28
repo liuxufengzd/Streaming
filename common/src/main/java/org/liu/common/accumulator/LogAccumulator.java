@@ -1,4 +1,4 @@
-package org.liu.accumulator;
+package org.liu.common.accumulator;
 
 import org.apache.spark.util.AccumulatorV2;
 

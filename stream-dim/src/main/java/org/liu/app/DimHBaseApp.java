@@ -10,12 +10,11 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
 import org.liu.accumulator.DimProcessAccumulator;
-import org.liu.accumulator.LogAccumulator;
-import org.liu.bean.DimTableMeta;
+import org.liu.common.bean.dim.DimTableMeta;
 import org.liu.common.app.AppBase;
 import org.liu.service.HBaseService;
-import org.liu.util.HBaseConnectionUtil;
-import org.liu.util.StreamUtils;
+import org.liu.common.util.HBaseConnectionUtil;
+import org.liu.common.util.StreamUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
@@ -39,7 +38,7 @@ public class DimHBaseApp extends AppBase {
         Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
         try {
             source.writeStream()
-                    .option("checkpointLocation", StreamUtils.getTableCheckpointPath(DIM_LAYER, TOPIC_DB + "_hbase"))
+                    .option("checkpointLocation", StreamUtil.getTableCheckpointPath(DIM_LAYER, TOPIC_DB + "_hbase"))
                     .foreachBatch((src, id) -> {
                         process(spark, src);
                     }).start().awaitTermination();
@@ -69,7 +68,7 @@ public class DimHBaseApp extends AppBase {
         DimProcessAccumulator metaAcc = new DimProcessAccumulator();
         spark.sparkContext().register(metaAcc);
         dimProcess.foreach(row -> {
-            metaAcc.add(new AbstractMap.SimpleEntry<>(row.getAs(DIM_PROCESS_SOURCE_TABLE), StreamUtils.getDimMetaFromDimProcessRow(row)));
+            metaAcc.add(new AbstractMap.SimpleEntry<>(row.getAs(DIM_PROCESS_SOURCE_TABLE), StreamUtil.getDimMetaFromDimProcessRow(row)));
         });
 
         // Transform and write to hbase tables

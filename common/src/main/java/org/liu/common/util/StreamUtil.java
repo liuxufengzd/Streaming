@@ -1,4 +1,4 @@
-package org.liu.util;
+package org.liu.common.util;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
@@ -6,12 +6,12 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.MapType;
 import org.apache.spark.sql.types.StructType;
 import org.json.JSONArray;
-import org.liu.bean.DimTableMeta;
+import org.liu.common.bean.dim.DimTableMeta;
 
 import static org.apache.spark.sql.types.DataTypes.*;
 import static org.liu.common.constant.Constant.*;
 
-public class StreamUtils {
+public class StreamUtil {
     public static DataType getDataType(String type) {
         switch (type.toLowerCase()) {
             case "string":
@@ -58,7 +58,7 @@ public class StreamUtils {
             if (nullable) {
                 type = type.substring(0, type.length() - 1);
             }
-            structType = structType.add(name, StreamUtils.getDataType(type), nullable);
+            structType = structType.add(name, StreamUtil.getDataType(type), nullable);
         }
         return new DimTableMeta(structType,
                 row.getAs(DIM_PROCESS_SINK_TABLE),

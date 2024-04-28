@@ -7,9 +7,9 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
 import org.liu.accumulator.DimProcessAccumulator;
-import org.liu.bean.DimTableMeta;
+import org.liu.common.bean.dim.DimTableMeta;
 import org.liu.common.app.AppBase;
-import org.liu.util.StreamUtils;
+import org.liu.common.util.StreamUtil;
 
 import java.util.AbstractMap;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class DimDeltaApp extends AppBase {
         Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
         try {
             source.writeStream()
-                    .option("checkpointLocation", StreamUtils.getTableCheckpointPath(DIM_LAYER, TOPIC_DB + "_delta"))
+                    .option("checkpointLocation", StreamUtil.getTableCheckpointPath(DIM_LAYER, TOPIC_DB + "_delta"))
                     .foreachBatch((src, id) -> {
                         process(spark, src);
                     }).start().awaitTermination();
@@ -68,7 +68,7 @@ public class DimDeltaApp extends AppBase {
         DimProcessAccumulator metaAcc = new DimProcessAccumulator();
         spark.sparkContext().register(metaAcc);
         dimProcess.foreach(row -> {
-            metaAcc.add(new AbstractMap.SimpleEntry<>(row.getAs(DIM_PROCESS_SOURCE_TABLE), StreamUtils.getDimMetaFromDimProcessRow(row)));
+            metaAcc.add(new AbstractMap.SimpleEntry<>(row.getAs(DIM_PROCESS_SOURCE_TABLE), StreamUtil.getDimMetaFromDimProcessRow(row)));
         });
 
         // Transform and write to delta tables
@@ -94,7 +94,7 @@ public class DimDeltaApp extends AppBase {
     private void writeToDelta(SparkSession spark, Dataset<Row> df, DimTableMeta meta) {
         DeltaTable.createIfNotExists(spark)
                 .addColumns(meta.schema)
-                .location(StreamUtils.getTablePath(DIM_LAYER, meta.sinkTable))
+                .location(StreamUtil.getTablePath(DIM_LAYER, meta.sinkTable))
                 .tableName(DELTA_DB + "." + meta.sinkTable)
                 .execute()
                 .as("sink")

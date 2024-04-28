@@ -1,4 +1,4 @@
-package org.liu.tool;
+package org.liu.common.tool;
 
 public class example {
     public static void main(String[] args) {

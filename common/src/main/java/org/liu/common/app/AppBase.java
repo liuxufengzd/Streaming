@@ -19,6 +19,8 @@ public abstract class AppBase implements Serializable {
                 .config("spark.sql.sources.partitionOverwriteMode", Constant.PARTITION_OVERWRITE_MODE)
                 .config("spark.sql.warehouse.dir", Constant.WAREHOUSE_DIR)
                 .config("hive.metastore.uris", Constant.METASTORE_URI)
+                .config("spark.sql.streaming.stateStore.providerClass", Constant.ROCKSDB_STATE_STORE)
+                .config("spark.sql.streaming.stateStore.rocksdb.changelogCheckpointing.enabled", true)
                 .config("spark.sql.extensions", Constant.SPARK_EXTENSIONS)
                 .config("spark.sql.catalog.spark_catalog", Constant.SPARK_CATALOG)
                 .enableHiveSupport()

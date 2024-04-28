@@ -1,0 +1,212 @@
+{
+  "topic": "topic_log",
+  "schema": [
+    {
+      "name": "MAIN",
+      "columns": [
+        {
+          "name": "common",
+          "type": "common_struct"
+        },
+        {
+          "name": "page",
+          "type": "page_struct?"
+        },
+        {
+          "name": "actions",
+          "type": "array<action_struct>?"
+        },
+        {
+          "name": "displays",
+          "type": "array<display_struct>?"
+        },
+        {
+          "name": "start",
+          "type": "start_struct?"
+        },
+        {
+          "name": "err",
+          "type": "error_struct?"
+        },
+        {
+          "name": "ts",
+          "type": "long"
+        }
+      ]
+    },
+    {
+      "name": "common_struct",
+      "columns": [
+        {
+          "name": "ar",
+          "type": "string?"
+        },
+        {
+          "name": "ba",
+          "type": "string?"
+        },
+        {
+          "name": "ch",
+          "type": "string?"
+        },
+        {
+          "name": "is_new",
+          "type": "string?"
+        },
+        {
+          "name": "md",
+          "type": "string?"
+        },
+        {
+          "name": "mid",
+          "type": "string?"
+        },
+        {
+          "name": "os",
+          "type": "string?"
+        },
+        {
+          "name": "sid",
+          "type": "string?"
+        },
+        {
+          "name": "uid",
+          "type": "string?"
+        },
+        {
+          "name": "vc",
+          "type": "string?"
+        }
+      ]
+    },
+    {
+      "name": "page_struct",
+      "columns": [
+        {
+          "name": "time",
+          "type": "string?"
+        },
+        {
+          "name": "item",
+          "type": "string?"
+        },
+        {
+          "name": "item_type",
+          "type": "string?"
+        },
+        {
+          "name": "last_page",
+          "type": "string?"
+        },
+        {
+          "name": "page_id",
+          "type": "string?"
+        },
+        {
+          "name": "from_pos_id",
+          "type": "string?"
+        },
+        {
+          "name": "from_pos_seq",
+          "type": "string?"
+        },
+        {
+          "name": "refer_id",
+          "type": "string?"
+        },
+        {
+          "name": "during_time",
+          "type": "string?"
+        }
+      ]
+    },
+    {
+      "name": "action_struct",
+      "columns": [
+        {
+          "name": "action_id",
+          "type": "string?"
+        },
+        {
+          "name": "item",
+          "type": "string?"
+        },
+        {
+          "name": "item_type",
+          "type": "string?"
+        },
+        {
+          "name": "ts",
+          "type": "long?"
+        }
+      ]
+    },
+    {
+      "name": "display_struct",
+      "columns": [
+        {
+          "name": "display_type",
+          "type": "string?"
+        },
+        {
+          "name": "item",
+          "type": "string?"
+        },
+        {
+          "name": "item_type",
+          "type": "string?"
+        },
+        {
+          "name": "pos_seq",
+          "type": "string?"
+        },
+        {
+          "name": "pos_id",
+          "type": "string?"
+        }
+      ]
+    },
+    {
+      "name": "start_struct",
+      "columns": [
+        {
+          "name": "entry",
+          "type": "string?"
+        },
+        {
+          "name": "first_open",
+          "type": "long?"
+        },
+        {
+          "name": "loading_time",
+          "type": "long?"
+        },
+        {
+          "name": "open_ad_id",
+          "type": "long?"
+        },
+        {
+          "name": "open_ad_ms",
+          "type": "long?"
+        },
+        {
+          "name": "open_ad_skip_ms",
+          "type": "long?"
+        }
+      ]
+    },
+    {
+      "name": "error_struct",
+      "columns": [
+        {
+          "name": "error_code",
+          "type": "long?"
+        },
+        {
+          "name": "msg",
+          "type": "string?"
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-package org.liu.util;
+package org.liu.common.util;
 
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
