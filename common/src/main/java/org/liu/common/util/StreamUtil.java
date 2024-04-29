@@ -1,12 +1,16 @@
 package org.liu.common.util;
 
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.MapType;
 import org.apache.spark.sql.types.StructType;
 import org.json.JSONArray;
 import org.liu.common.bean.dim.DimTableMeta;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.apache.spark.sql.types.DataTypes.*;
 import static org.liu.common.constant.Constant.*;
@@ -65,5 +69,18 @@ public class StreamUtil {
                 row.getAs(DIM_PROCESS_ROW_KEY),
                 row.getAs(DIM_PROCESS_COLUMN_FAMILY),
                 (int) row.getAs(DIM_PROCESS_TO_HBASE) != 0);
+    }
+
+    public static Row updateRow(Row row, Map<String, Object> columnValue) {
+        HashMap<Integer, Object> map = new HashMap<>();
+        columnValue.forEach((k, v) -> map.put(row.fieldIndex(k), row.getAs(k)));
+        Object[] objects = new Object[row.size()];
+        map.forEach((k, v) -> objects[k] = v);
+        for (int i = 0; i < row.size(); i++) {
+            if (!map.containsKey(i)) {
+                objects[i] = row.getAs(i);
+            }
+        }
+        return RowFactory.create(objects);
     }
 }

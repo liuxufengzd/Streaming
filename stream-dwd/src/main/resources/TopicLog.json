@@ -51,7 +51,7 @@
         },
         {
           "name": "is_new",
-          "type": "string?"
+          "type": "string"
         },
         {
           "name": "md",
@@ -59,7 +59,7 @@
         },
         {
           "name": "mid",
-          "type": "string?"
+          "type": "string"
         },
         {
           "name": "os",

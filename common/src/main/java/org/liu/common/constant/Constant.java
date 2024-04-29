@@ -11,8 +11,10 @@ public class Constant {
     public static final String DATABASE = "gmall";
     public static final String DIM_PROCESS_TABLE = "dim_process";
     public static final String TOPIC_DB = "topic_db";
+    public static final String TOPIC_LOG = "topic_log";
     public static final String DELTA_DB = "stream";
     public static final String DIM_LAYER = "dim";
+    public static final String DWD_LAYER = "dwd";
 
     // dim_process column names
     public static final String DIM_PROCESS_ID = "id";
