@@ -73,7 +73,7 @@ public class StreamUtil {
 
     public static Row updateRow(Row row, Map<String, Object> columnValue) {
         HashMap<Integer, Object> map = new HashMap<>();
-        columnValue.forEach((k, v) -> map.put(row.fieldIndex(k), row.getAs(k)));
+        columnValue.forEach((k, v) -> map.put(row.fieldIndex(k), v));
         Object[] objects = new Object[row.size()];
         map.forEach((k, v) -> objects[k] = v);
         for (int i = 0; i < row.size(); i++) {

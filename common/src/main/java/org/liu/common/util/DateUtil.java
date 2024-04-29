@@ -16,4 +16,10 @@ public class DateUtil {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return LocalDate.parse(date, formatter).plusDays(days).format(formatter);
     }
+
+    public static String getDate(String timestamp){
+        DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return LocalDate.parse(timestamp, formatter1).format(formatter2);
+    }
 }
