@@ -1,7 +1,9 @@
 package org.liu.common.util;
 
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
@@ -17,9 +19,11 @@ public class DateUtil {
         return LocalDate.parse(date, formatter).plusDays(days).format(formatter);
     }
 
-    public static String getDate(String timestamp){
-        DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        return LocalDate.parse(timestamp, formatter1).format(formatter2);
+    public static long getDurationInSeconds(String time1, String time2) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss");
+        LocalDateTime dateTime1 = LocalDateTime.parse(time1, formatter);
+        LocalDateTime dateTime2 = LocalDateTime.parse(time2, formatter);
+        Duration duration = Duration.between(dateTime1, dateTime2);
+        return duration.getSeconds();
     }
 }

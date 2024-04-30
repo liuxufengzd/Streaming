@@ -134,10 +134,6 @@
         {
           "name": "item_type",
           "type": "string?"
-        },
-        {
-          "name": "ts",
-          "type": "long?"
         }
       ]
     },

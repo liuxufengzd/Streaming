@@ -40,10 +40,11 @@ public class DimDeltaApp extends AppBase {
     }
 
     private void process(SparkSession spark, Dataset<Row> src) {
-        Dataset<Row> dimProcess = deltaBatch(spark, DELTA_DB + "." + DIM_PROCESS_TABLE)
+        Dataset<Row> dimProcess = deltaTable(spark, DELTA_DB + "." + DIM_PROCESS_TABLE)
                 .filter(col(DIM_PROCESS_TO_HBASE).equalTo(0));
 
         // Parse and filter dimensional table source
+        // AQE can optimize join in foreachBatch
         var sourceSchema = new StructType()
                 .add("table", StringType, false)
                 .add("type", StringType, false)
