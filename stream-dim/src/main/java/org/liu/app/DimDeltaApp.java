@@ -1,14 +1,14 @@
 package org.liu.app;
 
 import io.delta.tables.DeltaTable;
+import io.delta.tables.DeltaTableBuilder;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
 import org.liu.accumulator.DimProcessAccumulator;
-import org.liu.common.bean.dim.DimTableMeta;
 import org.liu.common.app.AppBase;
+import org.liu.common.bean.dim.DimTableMeta;
 import org.liu.common.util.StreamUtil;
 
 import java.util.AbstractMap;
@@ -33,14 +33,16 @@ public class DimDeltaApp extends AppBase {
                     .option("checkpointLocation", StreamUtil.getTableCheckpointPath(DIM_LAYER, TOPIC_DB + "_delta"))
                     .foreachBatch((src, id) -> {
                         process(spark, src);
-                    }).start().awaitTermination();
-        } catch (StreamingQueryException | TimeoutException e) {
+                    }).start();
+        } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
     }
 
     private void process(SparkSession spark, Dataset<Row> src) {
-        Dataset<Row> dimProcess = deltaTable(spark, DELTA_DB + "." + DIM_PROCESS_TABLE)
+        // Fetch whole dim_process table to ensure each micro batch can reference latest table
+        // We can also control the frequency of fetching if dim_process is slowly changed and lenient requirement to save resource
+        Dataset<Row> dimProcess = deltaTable(spark, DIM_PROCESS_TABLE)
                 .filter(col(DIM_PROCESS_TO_HBASE).equalTo(0));
 
         // Parse and filter dimensional table source
@@ -56,7 +58,7 @@ public class DimDeltaApp extends AppBase {
                 .join(dimProcess, col("table").equalTo(col(DIM_PROCESS_SOURCE_TABLE)), "left_semi")
                 .select(col("data"), col("table"), col("type").as("_type_"));
 
-        src.cache();
+        src.persist();
 
         // Collect metadata of all dimensional tables
         /*
@@ -93,16 +95,21 @@ public class DimDeltaApp extends AppBase {
     }
 
     private void writeToDelta(SparkSession spark, Dataset<Row> df, DimTableMeta meta) {
-        DeltaTable.createIfNotExists(spark)
+        DeltaTableBuilder builder = DeltaTable.createIfNotExists(spark)
                 .addColumns(meta.schema)
                 .location(StreamUtil.getTablePath(DIM_LAYER, meta.sinkTable))
-                .tableName(DELTA_DB + "." + meta.sinkTable)
-                .execute()
+                .tableName(DELTA_DB + "." + meta.sinkTable);
+        if (meta.partitionBy != null) {
+            builder = builder.partitionedBy(meta.partitionBy);
+        }
+        // For normal write to keep idempotence, refer Idempotent table writes in foreachBatch: https://learn.microsoft.com/en-us/azure/databricks/structured-streaming/delta-lake
+        // To keep idempotence, set condition for NotMatched (even though update may affect result for repeated micro-batch)
+        builder.execute()
                 .as("sink")
                 .merge(df.as("source"), String.format("sink.%s = source.%s", meta.rowKey, meta.rowKey))
                 .whenMatched("source._type_ = 'update'").updateAll()
                 .whenMatched("source._type_ = 'delete'").delete()
-                .whenNotMatched().insertAll()
+                .whenNotMatched("source._type_ = 'insert' OR source._type_ = 'bootstrap-insert'").insertAll()
                 .execute();
     }
 }

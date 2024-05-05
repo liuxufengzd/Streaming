@@ -12,6 +12,7 @@ public class DimTableMeta implements Serializable {
     public StructType schema;
     public String sinkTable;
     public String rowKey;
+    public String partitionBy;
     public String columnFamily;
     public boolean toHbase;
 }

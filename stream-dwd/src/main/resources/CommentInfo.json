@@ -1,0 +1,67 @@
+{
+  "topic": "topic_db",
+  "schema": [
+    {
+      "name": "MAIN",
+      "columns": [
+        {
+          "name": "database",
+          "type": "string"
+        },
+        {
+          "name": "table",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "data_struct"
+        }
+      ]
+    },
+    {
+      "name": "data_struct",
+      "columns": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "user_id",
+          "type": "string"
+        },
+        {
+          "name": "nick_name",
+          "type": "string"
+        },
+        {
+          "name": "sku_id",
+          "type": "string"
+        },
+        {
+          "name": "spu_id",
+          "type": "string"
+        },
+        {
+          "name": "order_id",
+          "type": "string"
+        },
+        {
+          "name": "appraise",
+          "type": "string"
+        },
+        {
+          "name": "comment_txt",
+          "type": "string"
+        },
+        {
+          "name": "create_time",
+          "type": "string"
+        }
+      ]
+    }
+  ]
+}

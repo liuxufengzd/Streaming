@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 
 import static org.apache.spark.sql.types.DataTypes.*;
 
-public class LogTopicMeta {
+public class TopicMeta {
     private final String MAIN_SCHEMA = "MAIN";
     @Getter
     private final String topic;
@@ -28,7 +28,7 @@ public class LogTopicMeta {
 
     static {
         BASE_TYPES.put("short", ShortType);
-        BASE_TYPES.put("integer", IntegerType);
+        BASE_TYPES.put("int", IntegerType);
         BASE_TYPES.put("long", LongType);
         BASE_TYPES.put("float", FloatType);
         BASE_TYPES.put("double", DoubleType);
@@ -38,7 +38,7 @@ public class LogTopicMeta {
         BASE_TYPES.put("boolean", BooleanType);
     }
 
-    public LogTopicMeta(String configName) {
+    public TopicMeta(String configName) {
         InputStream stream = StreamUtil.class.getResourceAsStream("/" + configName + ".json");
         if (stream == null) throw new RuntimeException("cannot find the file:" + configName + ".json");
         try {
@@ -85,11 +85,11 @@ public class LogTopicMeta {
         return structType;
     }
 
-    public StructType getStructType() {
-        return getStructType(MAIN_SCHEMA);
+    public StructType getSchema() {
+        return getSchema(MAIN_SCHEMA);
     }
 
-    public StructType getStructType(String name) {
+    public StructType getSchema(String name) {
         return structDict.get(name);
     }
 }

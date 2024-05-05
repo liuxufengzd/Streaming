@@ -8,10 +8,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class DateUtil {
-    public static String convertLongToDate(long timestamp) {
+    public static String longToDate(long timestamp) {
         Date date = new Date(timestamp);
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         return formatter.format(date);
+    }
+
+    public static String timestampToDate(Date timestamp) {
+        return new SimpleDateFormat("yyyy-MM-dd").format(timestamp);
     }
 
     public static String addNDaysToDate(String date, int days){

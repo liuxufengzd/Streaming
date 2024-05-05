@@ -1,0 +1,79 @@
+{
+  "topic": "topic_db",
+  "schema": [
+    {
+      "name": "MAIN",
+      "columns": [
+        {
+          "name": "database",
+          "type": "string"
+        },
+        {
+          "name": "table",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "data_struct"
+        },
+        {
+          "name": "old",
+          "type": "map<string,string>?"
+        }
+      ]
+    },
+    {
+      "name": "data_struct",
+      "columns": [
+        {
+          "name": "id",
+          "type": "string?"
+        },
+        {
+          "name": "user_id",
+          "type": "string?"
+        },
+        {
+          "name": "sku_id",
+          "type": "string?"
+        },
+        {
+          "name": "cart_price",
+          "type": "double?"
+        },
+        {
+          "name": "sku_num",
+          "type": "long?"
+        },
+        {
+          "name": "sku_name",
+          "type": "string?"
+        },
+        {
+          "name": "is_checked",
+          "type": "string?"
+        },
+        {
+          "name": "create_time",
+          "type": "string?"
+        },
+        {
+          "name": "operate_time",
+          "type": "string?"
+        },
+        {
+          "name": "is_ordered",
+          "type": "string?"
+        },
+        {
+          "name": "order_time",
+          "type": "string?"
+        }
+      ]
+    }
+  ]
+}

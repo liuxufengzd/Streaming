@@ -1,4 +1,4 @@
-package org.liu.service;
+package org.liu.common.service;
 
 
 import org.apache.hadoop.hbase.*;
@@ -10,6 +10,7 @@ import org.liu.common.util.HBaseConnectionUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -83,18 +84,31 @@ public class HBaseService {
         }
     }
 
-    public List<String> getColumns(String database, String tableName, String rowKey, Map<String, String> columnMap) {
+    public Map<String, String> getColumns(String database, String tableName, String rowKey, Map<String, String> columnMap) {
         try (Table table = HBaseConnectionUtil.getTable(conn, database, tableName)) {
             Get get = new Get(Bytes.toBytes(rowKey));
             for (String column : columnMap.keySet()) {
                 get.addColumn(Bytes.toBytes(columnMap.get(column)), Bytes.toBytes(column));
             }
             Result result = table.get(get);
-            ArrayList<String> res = new ArrayList<>();
+            HashMap<String, String> res = new HashMap<>();
             for (Cell cell : result.rawCells()) {
-                res.add(new String(CellUtil.cloneValue(cell)));
+                String column = new String(cell.getQualifierArray());
+                String value = new String(CellUtil.cloneValue(cell));
+                res.put(column, value);
             }
             return res;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String getColumn(String database, String tableName, String rowKey, String columnFamily, String column) {
+        try (Table table = HBaseConnectionUtil.getTable(conn, database, tableName)) {
+            Get get = new Get(Bytes.toBytes(rowKey));
+            get.addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(column));
+            return new String(CellUtil.cloneValue(table.get(get).rawCells()[0]));
         } catch (IOException e) {
             e.printStackTrace();
             return null;

@@ -1,4 +1,4 @@
-package org.liu.bean;
+package org.liu.bean.state;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

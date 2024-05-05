@@ -67,11 +67,13 @@ public class StreamUtil {
         return new DimTableMeta(structType,
                 row.getAs(DIM_PROCESS_SINK_TABLE),
                 row.getAs(DIM_PROCESS_ROW_KEY),
+                row.getAs(DIM_PROCESS_PARTITION_BY),
                 row.getAs(DIM_PROCESS_COLUMN_FAMILY),
                 (int) row.getAs(DIM_PROCESS_TO_HBASE) != 0);
     }
 
     public static Row updateRow(Row row, Map<String, Object> columnValue) {
+        if (columnValue.isEmpty()) return row;
         HashMap<Integer, Object> map = new HashMap<>();
         columnValue.forEach((k, v) -> map.put(row.fieldIndex(k), v));
         Object[] objects = new Object[row.size()];

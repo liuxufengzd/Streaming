@@ -1,0 +1,47 @@
+{
+  "topic": "topic_db",
+  "schema": [
+    {
+      "name": "MAIN",
+      "columns": [
+        {
+          "name": "database",
+          "type": "string"
+        },
+        {
+          "name": "table",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "data_struct"
+        }
+      ]
+    },
+    {
+      "name": "data_struct",
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "string"
+        },
+        {
+          "name": "activity_id",
+          "type": "string?"
+        },
+        {
+          "name": "activity_rule_id",
+          "type": "string?"
+        },
+        {
+          "name": "create_time",
+          "type": "timestamp"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "topic": "topic_db",
+  "schema": [
+    {
+      "name": "MAIN",
+      "columns": [
+        {
+          "name": "database",
+          "type": "string"
+        },
+        {
+          "name": "table",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "data_struct"
+        }
+      ]
+    },
+    {
+      "name": "data_struct",
+      "columns": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "order_id",
+          "type": "string"
+        },
+        {
+          "name": "user_id",
+          "type": "string"
+        },
+        {
+          "name": "payment_type",
+          "type": "string?"
+        },
+        {
+          "name": "payment_status",
+          "type": "string?"
+        },
+        {
+          "name": "total_amount",
+          "type": "double?"
+        },
+        {
+          "name": "callback_time",
+          "type": "timestamp"
+        }
+      ]
+    }
+  ]
+}

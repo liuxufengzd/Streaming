@@ -95,7 +95,7 @@
           "type": "string?"
         },
         {
-          "name": "last_page",
+          "name": "last_page_id",
           "type": "string?"
         },
         {

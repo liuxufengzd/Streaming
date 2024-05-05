@@ -7,14 +7,13 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
 import org.liu.accumulator.DimProcessAccumulator;
-import org.liu.common.bean.dim.DimTableMeta;
 import org.liu.common.app.AppBase;
-import org.liu.service.HBaseService;
+import org.liu.common.bean.dim.DimTableMeta;
 import org.liu.common.util.HBaseConnectionUtil;
 import org.liu.common.util.StreamUtil;
+import org.liu.common.service.HBaseService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
@@ -41,14 +40,14 @@ public class DimHBaseApp extends AppBase {
                     .option("checkpointLocation", StreamUtil.getTableCheckpointPath(DIM_LAYER, TOPIC_DB + "_hbase"))
                     .foreachBatch((src, id) -> {
                         process(spark, src);
-                    }).start().awaitTermination();
-        } catch (StreamingQueryException | TimeoutException e) {
+                    }).start();
+        } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
     }
 
     private void process(SparkSession spark, Dataset<Row> src) {
-        Dataset<Row> dimProcess = deltaTable(spark, DELTA_DB + "." + DIM_PROCESS_TABLE)
+        Dataset<Row> dimProcess = deltaTable(spark, DIM_PROCESS_TABLE)
                 .filter(col(DIM_PROCESS_TO_HBASE).notEqual(0));
 
         // Parse and filter dimensional table source
@@ -91,6 +90,12 @@ public class DimHBaseApp extends AppBase {
         src.unpersist();
     }
 
+    /*
+    We can consider leveraging HBase for case:
+    Record level reading/writing is required and table is large, which is costly and slow to load the whole static table even compared with HBase heavy metadata (e.g. user table).
+    Create connection with HBase for each worker is not recommended because it will limit the scalability
+    So use HBase with caution
+     */
     private void writeToHBase(Dataset<Row> df, DimTableMeta meta) {
         df.foreachPartition(partition -> {
             ArrayList<Put> puts = new ArrayList<>();
@@ -120,7 +125,7 @@ public class DimHBaseApp extends AppBase {
                 }
             }
             // Cannot use foreach, because creating connection for each row is drastically expensive
-            // Each new connection for each task (even somehow expensive)
+            // Each new connection for each micro batch (even somehow expensive)
             Connection conn = HBaseConnectionUtil.newConnection();
             HBaseService service = new HBaseService(conn);
             // service.createDatabase(DATABASE);

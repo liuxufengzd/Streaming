@@ -1,4 +1,4 @@
-package org.liu.app;
+package org.liu.app.log;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
@@ -6,10 +6,9 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.streaming.GroupState;
 import org.apache.spark.sql.streaming.GroupStateTimeout;
 import org.apache.spark.sql.streaming.OutputMode;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
-import org.liu.bean.DeviceState;
-import org.liu.bean.LogTopicMeta;
+import org.liu.bean.TopicMeta;
+import org.liu.bean.state.DeviceState;
 import org.liu.common.app.AppBase;
 import org.liu.common.util.DateUtil;
 import org.liu.common.util.StreamUtil;
@@ -21,13 +20,12 @@ import java.util.Iterator;
 import java.util.concurrent.TimeoutException;
 
 import static org.apache.spark.sql.functions.*;
-import static org.liu.common.constant.Constant.DWD_LAYER;
-import static org.liu.common.constant.Constant.TOPIC_LOG;
+import static org.liu.common.constant.Constant.*;
 
-public class DwdLogApp extends AppBase {
+public class LogApp extends AppBase {
 
     public static void main(String[] args) {
-        new DwdLogApp().start(args, 4);
+        new LogApp().start(args, 4);
     }
 
     @Override
@@ -36,7 +34,7 @@ public class DwdLogApp extends AppBase {
         Dataset<Row> source = kafkaStream(spark, TOPIC_LOG);
 
         // Parse data and filter out bad events
-        StructType schema = new LogTopicMeta("TopicLog").getStructType();
+        StructType schema = new TopicMeta("TopicLog").getSchema();
         Dataset<Row> parsedSource = source.select(from_json(col("value"), schema).as("columns"), col("value"));
         var filterOut = "isnull(columns) " +
                 "OR isnull(columns.ts) " +
@@ -45,7 +43,7 @@ public class DwdLogApp extends AppBase {
 
         // Write invalid data for monitoring
         Dataset<Row> invalidData = parsedSource.where(filterOut).select(col("value"),current_date().as("date"));
-        streamToDeltaTable(invalidData, DWD_LAYER, "topic_log_invalid", OutputMode.Append(), "date");
+        streamToDeltaTable(invalidData, DWD_LAYER, "topic_log_invalid", "date");
 
         Dataset<Row> validData = parsedSource.where(String.format("NOT (%s)", filterOut)).select(
                 col("columns.*"),
@@ -80,39 +78,37 @@ public class DwdLogApp extends AppBase {
             validData.writeStream()
                     .option("checkpointLocation", StreamUtil.getTableCheckpointPath(DWD_LAYER, TOPIC_LOG))
                     .foreachBatch((src, id) -> {
-                        src.cache();
+                        src.persist();
 
                         Dataset<Row> startData = src.where("isnotnull(start)").select("common.*", "start.*", "ts")
                                 .withColumn("date", date_format(col("ts"), "yyyy-MM-dd"));
-                        batchToDeltaTable(startData, DWD_LAYER, "topic_log_start", SaveMode.Append, "date");
+                        batchToDeltaTable(startData, DWD_LAYER, TOPIC_LOG_START, SaveMode.Append, "date");
 
                         Dataset<Row> errorData = src.where("isnotnull(err)").select("err.*", "ts")
                                 .withColumn("date", date_format(col("ts"), "yyyy-MM-dd"));
-                        batchToDeltaTable(errorData, DWD_LAYER, "topic_log_err", SaveMode.Append, "date");
+                        batchToDeltaTable(errorData, DWD_LAYER, TOPIC_LOG_ERR, SaveMode.Append, "date");
 
                         Dataset<Row> pageData = src.where("isnotnull(page)").select("common.*", "page.*", "ts")
                                 .withColumn("date", date_format(col("ts"), "yyyy-MM-dd"));
-                        batchToDeltaTable(pageData, DWD_LAYER, "topic_log_page", SaveMode.Append, "date");
+                        batchToDeltaTable(pageData, DWD_LAYER, TOPIC_LOG_PAGE, SaveMode.Append, "date");
 
                         Dataset<Row> displayData = src.where("isnotnull(displays)");
                         displayData.createOrReplaceGlobalTempView("displayData");
                         displayData = spark.sql("SELECT common.*, page.*, d.display_type, d.item display_item, d.item_type display_item_type, d.pos_seq, d.pos_id, ts " +
                                         "FROM global_temp.displayData LATERAL VIEW EXPLODE(displays) tmp as d")
                                 .withColumn("date", date_format(col("ts"), "yyyy-MM-dd"));
-                        batchToDeltaTable(displayData, DWD_LAYER, "topic_log_display", SaveMode.Append, "date");
+                        batchToDeltaTable(displayData, DWD_LAYER, TOPIC_LOG_DISPLAY, SaveMode.Append, "date");
 
                         Dataset<Row> actionData = src.where("isnotnull(actions)");
                         actionData.createOrReplaceGlobalTempView("actionData");
                         actionData = spark.sql("SELECT common.*, page.*, a.action_id, a.item action_item, a.item_type action_item_type, ts " +
                                         "FROM global_temp.actionData LATERAL VIEW EXPLODE(actions) tmp as a")
                                 .withColumn("date", date_format(col("ts"), "yyyy-MM-dd"));
-                        batchToDeltaTable(actionData, DWD_LAYER, "topic_log_action", SaveMode.Append, "date");
+                        batchToDeltaTable(actionData, DWD_LAYER, TOPIC_LOG_ACTION, SaveMode.Append, "date");
 
                         src.unpersist();
                     }).start();
-
-            spark.streams().awaitAnyTermination();
-        } catch (TimeoutException | StreamingQueryException e) {
+        } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
     }

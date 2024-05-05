@@ -1,0 +1,67 @@
+{
+  "topic": "topic_db",
+  "schema": [
+    {
+      "name": "MAIN",
+      "columns": [
+        {
+          "name": "database",
+          "type": "string"
+        },
+        {
+          "name": "table",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "data_struct"
+        }
+      ]
+    },
+    {
+      "name": "data_struct",
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "string"
+        },
+        {
+          "name": "sku_id",
+          "type": "string?"
+        },
+        {
+          "name": "sku_name",
+          "type": "string?"
+        },
+        {
+          "name": "order_price",
+          "type": "double?"
+        },
+        {
+          "name": "sku_num",
+          "type": "int?"
+        },
+        {
+          "name": "create_time",
+          "type": "timestamp"
+        },
+        {
+          "name": "split_total_amount",
+          "type": "double?"
+        },
+        {
+          "name": "split_activity_amount",
+          "type": "double?"
+        },
+        {
+          "name": "split_coupon_amount",
+          "type": "double?"
+        }
+      ]
+    }
+  ]
+}

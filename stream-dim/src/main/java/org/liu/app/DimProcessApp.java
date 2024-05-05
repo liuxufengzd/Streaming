@@ -4,7 +4,6 @@ import io.delta.tables.DeltaTable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
 import org.liu.common.app.AppBase;
 import org.liu.common.util.StreamUtil;
@@ -25,23 +24,6 @@ public class DimProcessApp extends AppBase {
         // Actually we can make maxwell monitor table groups for different topics to avoid trigger running too frequently
         Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
 
-        /*
-          activity_info
-          activity_rule
-          activity_sku
-          base_category1
-          base_category2
-          base_category3
-          base_province
-          base_region
-          base_trademark
-          coupon_info
-          coupon_range
-          financial_sku_cost
-          sku_info
-          spu_info
-          user_info
-         */
         // Define raw log schema
         var dataSchema = new StructType()
                 .add(DIM_PROCESS_ID, StringType)
@@ -49,6 +31,7 @@ public class DimProcessApp extends AppBase {
                 .add(DIM_PROCESS_SINK_TABLE, StringType)
                 .add(DIM_PROCESS_ROW_KEY, StringType)
                 .add(DIM_PROCESS_SCHEMA, StringType)
+                .add(DIM_PROCESS_PARTITION_BY, StringType)
                 .add(DIM_PROCESS_COLUMN_FAMILY, StringType)
                 .add(DIM_PROCESS_TO_HBASE, IntegerType);
 
@@ -94,6 +77,7 @@ public class DimProcessApp extends AppBase {
 
             source.writeStream()
                     .option("checkpointLocation", StreamUtil.getTableCheckpointPath(DIM_LAYER, DIM_PROCESS_TABLE))
+                    .option("mergeSchema", true)
                     .foreachBatch((src, batchId) -> {
                         if (!src.isEmpty()) {
                             table.as("target").merge(src.as("source"), "target.id = source.id")
@@ -103,9 +87,8 @@ public class DimProcessApp extends AppBase {
                                     .execute();
                         }
                     })
-                    .start()
-                    .awaitTermination();
-        } catch (StreamingQueryException | TimeoutException ignore) {
+                    .start();
+        } catch (TimeoutException ignore) {
         }
     }
 }
