@@ -1,7 +1,10 @@
 package org.liu.app;
 
 import org.apache.spark.api.java.function.MapFunction;
-import org.apache.spark.sql.*;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.streaming.GroupState;
 import org.apache.spark.sql.streaming.GroupStateTimeout;
@@ -13,7 +16,6 @@ import org.liu.common.util.StreamUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.concurrent.TimeoutException;
 
 import static org.apache.spark.sql.functions.*;
 import static org.liu.common.constant.Constant.*;
@@ -33,27 +35,16 @@ public class UserLoginApp extends AppBase {
 
         source = source.groupByKey((MapFunction<Row, String>) row -> (String) row.getAs("uid"), Encoders.STRING())
                 .flatMapGroupsWithState(this::stateHandler, OutputMode.Append(), Encoders.STRING(), RowEncoder.apply(source.schema()), GroupStateTimeout.NoTimeout())
-                .drop("uid")
-                .filter("uuCt > 0 AND backCt > 0");
+                .drop("uid");
 
         source = source.withWatermark("ts", "3 seconds")
-                .groupBy(
-                        window(col("ts"), "10s")
-                ).agg(
+                .groupBy(window(col("ts"), "10 seconds"))
+                .agg(
                         sum("uuCt").as("uuCt"),
                         sum("backCt").as("backCt")
-                ).withColumn("date", date_format(col("ts"), "yyyy-MM-dd"));
+                ).withColumn("date", date_format(col("window.end"), "yyyy-MM-dd"));
 
-//        streamToDeltaTable(source, DWS_LAYER, DWS_USER_LOGIN, "date");
-//        deltaTableConsole(spark, DWS_USER_LOGIN);
-
-        try {
-            source.writeStream()
-                    .format("console")
-                    .start();
-        } catch (TimeoutException e) {
-            throw new RuntimeException(e);
-        }
+        streamToDeltaTable(source, DWS_LAYER, DWS_USER_LOGIN, "date");
     }
 
     private Iterator<Row> stateHandler(String uid, Iterator<Row> rows, GroupState<String> lastLoginDate) {
@@ -66,7 +57,7 @@ public class UserLoginApp extends AppBase {
                 String preDate = lastLoginDate.get();
                 if (!preDate.equals(date)) {
                     updateMap.put("uuCt", 1);
-                    if (DateUtil.getDurationInSeconds(preDate, date) > 8 * 24 * 60 * 60) {
+                    if (DateUtil.getDurationInDays(preDate, date) > 7) {
                         updateMap.put("backCt", 1);
                     }
                     lastLoginDate.update(date);
@@ -75,7 +66,8 @@ public class UserLoginApp extends AppBase {
                 updateMap.put("uuCt", 1);
                 lastLoginDate.update(date);
             }
-            res.add(StreamUtil.updateRow(row, updateMap));
+            if (!updateMap.isEmpty())
+                res.add(StreamUtil.updateRow(row, updateMap));
         }
         return res.iterator();
     }

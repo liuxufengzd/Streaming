@@ -37,10 +37,13 @@ public class Constant {
     public static final String DIM_USER_INFO = "dim_user_info";
     public static final String DWD_COMMENT_INFO = "dwd_comment_info";
     public static final String DWD_CART_INFO = "dwd_cart_info";
+    public static final String DWD_USER_INFO = "dwd_user_info";
     public static final String DWD_ORDER_DETAIL = "dwd_order_detail";
     public static final String DWD_PAYMENT_INFO = "dwd_payment_info";
     public static final String DWS_SEARCH_KEYWORD_COUNT = "dws_search_keyword_count";
     public static final String DWS_TRAFFIC_PAGE_VIEW_COUNT = "dws_traffic_page_view_count";
     public static final String DWS_TRAFFIC_HOME_DETAILPAGE_VIEW_COUNT = "dws_traffic_home_detailPage_view_count";
     public static final String DWS_USER_LOGIN = "dws_user_login";
+    public static final String DWS_USER_REGISTER = "dws_user_register";
+    public static final String DWS_TRADE_CART_ADD = "dws_trade_cart_add";
 }

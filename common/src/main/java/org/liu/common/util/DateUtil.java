@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 public class DateUtil {
@@ -18,7 +19,7 @@ public class DateUtil {
         return new SimpleDateFormat("yyyy-MM-dd").format(timestamp);
     }
 
-    public static String addNDaysToDate(String date, int days){
+    public static String addNDaysToDate(String date, int days) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return LocalDate.parse(date, formatter).plusDays(days).format(formatter);
     }
@@ -29,5 +30,12 @@ public class DateUtil {
         LocalDateTime dateTime2 = LocalDateTime.parse(time2, formatter);
         Duration duration = Duration.between(dateTime1, dateTime2);
         return duration.getSeconds();
+    }
+
+    public static long getDurationInDays(String date1, String date2) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate d1 = LocalDate.parse(date1, formatter);
+        LocalDate d2 = LocalDate.parse(date2, formatter);
+        return ChronoUnit.DAYS.between(d1, d2);
     }
 }
