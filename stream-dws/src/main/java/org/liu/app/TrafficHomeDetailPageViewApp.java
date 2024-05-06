@@ -37,9 +37,11 @@ public class TrafficHomeDetailPageViewApp extends AppBase {
         Dataset<Row> goodDetailSource = source.filter("page_id = 'good_detail'").drop("page_id");
         homeSource = homeSource.groupByKey((MapFunction<Row, String>) r -> (String) r.getAs("mid"), Encoders.STRING())
                 .flatMapGroupsWithState(this::stateHandler, OutputMode.Append(), Encoders.STRING(), RowEncoder.apply(homeSource.schema()), GroupStateTimeout.ProcessingTimeTimeout())
+                .filter("uv > 0")
                 .drop("mid");
         goodDetailSource = goodDetailSource.groupByKey((MapFunction<Row, String>) r -> (String) r.getAs("mid"), Encoders.STRING())
                 .flatMapGroupsWithState(this::stateHandler, OutputMode.Append(), Encoders.STRING(), RowEncoder.apply(goodDetailSource.schema()), GroupStateTimeout.ProcessingTimeTimeout())
+                .filter("uv > 0")
                 .drop("mid");
         source = homeSource.withColumnRenamed("uv", "home_uv").withColumn("good_detail_uv", lit(0))
                 .unionByName(goodDetailSource.withColumnRenamed("uv", "good_detail_uv").withColumn("home_uv", lit(0)));
