@@ -38,12 +38,12 @@
           "type": "string?"
         },
         {
-          "name": "order_price",
-          "type": "double?"
-        },
-        {
           "name": "sku_num",
           "type": "int?"
+        },
+        {
+          "name": "order_price",
+          "type": "double?"
         },
         {
           "name": "create_time",

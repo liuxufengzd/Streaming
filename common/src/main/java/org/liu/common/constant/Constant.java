@@ -46,4 +46,5 @@ public class Constant {
     public static final String DWS_USER_LOGIN = "dws_user_login";
     public static final String DWS_USER_REGISTER = "dws_user_register";
     public static final String DWS_TRADE_CART_ADD = "dws_trade_cart_add";
+    public static final String DWS_TRADE_PAYMENT_SUC = "dws_trade_payment_suc";
 }
