@@ -56,8 +56,6 @@ public class TrafficHomeDetailPageViewApp extends AppBase {
 
         // Write to delta table
         streamToDeltaTable(source, DWS_LAYER, DWS_TRAFFIC_HOME_DETAILPAGE_VIEW_COUNT, "date");
-
-        deltaTableConsole(spark, DWS_TRAFFIC_HOME_DETAILPAGE_VIEW_COUNT);
     }
 
     private Iterator<Row> stateHandler(String mid, Iterator<Row> rows, GroupState<String> lastVisitDate) {

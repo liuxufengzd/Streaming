@@ -35,6 +35,12 @@ public class Constant {
     public static final String TOPIC_LOG_ACTION = "topic_log_action";
     public static final String DIM_BASE_DIC = "dim_base_dic";
     public static final String DIM_USER_INFO = "dim_user_info";
+    public static final String DIM_SKU_INFO = "dim_sku_info";
+    public static final String DIM_SPU_INFO = "dim_spu_info";
+    public static final String DIM_BASE_CATEGORY1 = "dim_base_category1";
+    public static final String DIM_BASE_CATEGORY2 = "dim_base_category2";
+    public static final String DIM_BASE_CATEGORY3 = "dim_base_category3";
+    public static final String DIM_BASE_TRADEMARK = "dim_base_trademark";
     public static final String DWD_COMMENT_INFO = "dwd_comment_info";
     public static final String DWD_CART_INFO = "dwd_cart_info";
     public static final String DWD_USER_INFO = "dwd_user_info";
@@ -47,4 +53,5 @@ public class Constant {
     public static final String DWS_USER_REGISTER = "dws_user_register";
     public static final String DWS_TRADE_CART_ADD = "dws_trade_cart_add";
     public static final String DWS_TRADE_PAYMENT_SUC = "dws_trade_payment_suc";
+    public static final String DWS_TRADE_SKU_ORDER = "dws_trade_sku_order";
 }

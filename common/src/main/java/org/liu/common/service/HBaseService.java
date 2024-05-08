@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.liu.common.util.HBaseConnectionUtil;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -84,17 +85,19 @@ public class HBaseService {
         }
     }
 
-    public Map<String, String> getColumns(String database, String tableName, String rowKey, Map<String, String> columnMap) {
+    public Map<String, String> getColumns(String database, String tableName, String rowKey, String columns) {
         try (Table table = HBaseConnectionUtil.getTable(conn, database, tableName)) {
             Get get = new Get(Bytes.toBytes(rowKey));
-            for (String column : columnMap.keySet()) {
-                get.addColumn(Bytes.toBytes(columnMap.get(column)), Bytes.toBytes(column));
+            String[] strings = columns.split(",");
+            for (String str : strings) {
+                String[] e = str.trim().split("\\.");
+                get.addColumn(Bytes.toBytes(e[0]), Bytes.toBytes(e[1]));
             }
             Result result = table.get(get);
             HashMap<String, String> res = new HashMap<>();
             for (Cell cell : result.rawCells()) {
-                String column = new String(cell.getQualifierArray());
-                String value = new String(CellUtil.cloneValue(cell));
+                String column = new String(CellUtil.cloneQualifier(cell), StandardCharsets.UTF_8);
+                String value = new String(CellUtil.cloneValue(cell), StandardCharsets.UTF_8);
                 res.put(column, value);
             }
             return res;
@@ -108,7 +111,7 @@ public class HBaseService {
         try (Table table = HBaseConnectionUtil.getTable(conn, database, tableName)) {
             Get get = new Get(Bytes.toBytes(rowKey));
             get.addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(column));
-            return new String(CellUtil.cloneValue(table.get(get).rawCells()[0]));
+            return new String(CellUtil.cloneValue(table.get(get).rawCells()[0]), StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -128,7 +131,7 @@ public class HBaseService {
             for (Result result : scanner) {
                 ArrayList<String> columns = new ArrayList<>();
                 for (Cell cell : result.rawCells()) {
-                    columns.add(new String(CellUtil.cloneValue(cell)));
+                    columns.add(new String(CellUtil.cloneValue(cell), StandardCharsets.UTF_8));
                 }
                 res.add(columns);
             }

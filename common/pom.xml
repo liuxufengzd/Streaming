@@ -22,5 +22,9 @@
             <groupId>com.janeluo</groupId>
             <artifactId>ikanalyzer</artifactId>
         </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+        </dependency>
     </dependencies>
 </project>

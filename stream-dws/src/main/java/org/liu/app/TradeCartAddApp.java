@@ -39,7 +39,6 @@ public class TradeCartAddApp extends AppBase {
                 .withColumn("date", date_format(col("window.end"), "yyyy-MM-dd"));
 
         streamToDeltaTable(source, DWS_LAYER, DWS_TRADE_CART_ADD, "date");
-        deltaTableConsole(spark, DWS_TRADE_CART_ADD);
     }
 
     private Iterator<Row> stateHandler(String user_id, Iterator<Row> rows, GroupState<String> lastCartAddDate) {

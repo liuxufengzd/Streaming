@@ -11,12 +11,10 @@ import org.apache.spark.sql.types.StructType;
 import org.liu.accumulator.DimProcessAccumulator;
 import org.liu.common.app.AppBase;
 import org.liu.common.bean.dim.DimTableMeta;
+import org.liu.common.service.HBaseService;
 import org.liu.common.util.HBaseConnectionUtil;
 import org.liu.common.util.StreamUtil;
-import org.liu.common.service.HBaseService;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Map;
@@ -115,12 +113,11 @@ public class DimHBaseApp extends AppBase {
                     for (String name : columnNames) {
                         if ("_type_".equals(name)) continue;
                         Put put = new Put(Bytes.toBytes(rowKey));
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        ObjectOutputStream oos = new ObjectOutputStream(bos);
-                        oos.writeObject(row.getAs(name));
-                        oos.flush();
-                        put.addColumn(Bytes.toBytes(meta.columnFamily), Bytes.toBytes(name), bos.toByteArray());
-                        puts.add(put);
+                        Object value = row.getAs(name);
+                        if (value != null){
+                            put.addColumn(Bytes.toBytes(meta.columnFamily), Bytes.toBytes(name), Bytes.toBytes(value.toString()));
+                            puts.add(put);
+                        }
                     }
                 }
             }
