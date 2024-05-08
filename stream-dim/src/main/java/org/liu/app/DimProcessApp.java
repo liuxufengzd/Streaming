@@ -38,7 +38,7 @@ public class DimProcessApp extends AppBase {
         var schema = new StructType()
                 .add("database", StringType)
                 .add("table", StringType)
-                    .add("type", StringType)
+                .add("type", StringType)
                 .add("data", dataSchema)
                 .add("ts", LongType);
         try {

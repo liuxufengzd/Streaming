@@ -41,6 +41,7 @@ public class Constant {
     public static final String DIM_BASE_CATEGORY2 = "dim_base_category2";
     public static final String DIM_BASE_CATEGORY3 = "dim_base_category3";
     public static final String DIM_BASE_TRADEMARK = "dim_base_trademark";
+    public static final String DIM_BASE_PROVINCE = "dim_base_province";
     public static final String DWD_COMMENT_INFO = "dwd_comment_info";
     public static final String DWD_CART_INFO = "dwd_cart_info";
     public static final String DWD_USER_INFO = "dwd_user_info";
@@ -54,4 +55,5 @@ public class Constant {
     public static final String DWS_TRADE_CART_ADD = "dws_trade_cart_add";
     public static final String DWS_TRADE_PAYMENT_SUC = "dws_trade_payment_suc";
     public static final String DWS_TRADE_SKU_ORDER = "dws_trade_sku_order";
+    public static final String DWS_TRADE_PROVINCE_ORDER = "dws_trade_province_order";
 }

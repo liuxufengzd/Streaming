@@ -40,4 +40,5 @@ public class TradeSkuOrderBean {
 
     Timestamp startTime;
     Timestamp endTime;
+    String date;
 }
