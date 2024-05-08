@@ -85,13 +85,11 @@ public class HBaseService {
         }
     }
 
-    public Map<String, String> getColumns(String database, String tableName, String rowKey, String columns) {
+    public Map<String, String> getColumns(String database, String tableName, String rowKey, String columnFamily, String[] columns) {
         try (Table table = HBaseConnectionUtil.getTable(conn, database, tableName)) {
             Get get = new Get(Bytes.toBytes(rowKey));
-            String[] strings = columns.split(",");
-            for (String str : strings) {
-                String[] e = str.trim().split("\\.");
-                get.addColumn(Bytes.toBytes(e[0]), Bytes.toBytes(e[1]));
+            for (String column : columns) {
+                get.addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(column));
             }
             Result result = table.get(get);
             HashMap<String, String> res = new HashMap<>();

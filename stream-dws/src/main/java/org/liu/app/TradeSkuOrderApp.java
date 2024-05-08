@@ -6,7 +6,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.json.JSONObject;
 import org.liu.bean.TradeSkuOrderBean;
 import org.liu.common.app.AppBase;
 import org.liu.common.service.HBaseService;
@@ -23,6 +22,8 @@ import static org.apache.spark.sql.functions.*;
 import static org.liu.common.constant.Constant.*;
 
 public class TradeSkuOrderApp extends AppBase {
+    private Connection conn;
+
     public static void main(String[] args) {
         new TradeSkuOrderApp().start(args, 4);
     }
@@ -57,57 +58,43 @@ public class TradeSkuOrderApp extends AppBase {
 
     private void process(Dataset<Row> src, long id) {
         Dataset<TradeSkuOrderBean> data = src.mapPartitions((MapPartitionsFunction<Row, TradeSkuOrderBean>) rows -> {
-            Connection conn = null;
             Jedis client = RedisUtil.getClient();
             ArrayList<TradeSkuOrderBean> res = new ArrayList<>();
 
             while (rows.hasNext()) {
                 Row row = rows.next();
                 String skuId = row.getAs("sku_id");
-                JSONObject dim;
-                if (client.exists(skuId)) {
-                    dim = new JSONObject(client.get(skuId));
-                } else {
-                    if (conn == null) conn = HBaseConnectionUtil.newConnection();
-                    HBaseService service = new HBaseService(conn);
-                    Map<String, String> skuInfo = service.getColumns(DATABASE, DIM_SKU_INFO, skuId, "info.category3_id,info.tm_id,info.spu_id,info.sku_name");
-                    Map<String, String> spuInfo = service.getColumns(DATABASE, DIM_SPU_INFO, skuInfo.get("spu_id"), "info.spu_name");
-                    Map<String, String> baseCat3 = service.getColumns(DATABASE, DIM_BASE_CATEGORY3, skuInfo.get("category3_id"), "info.name,info.category2_id");
-                    Map<String, String> baseCat2 = service.getColumns(DATABASE, DIM_BASE_CATEGORY2, baseCat3.get("category2_id"), "info.name,info.category1_id");
-                    Map<String, String> baseCat1 = service.getColumns(DATABASE, DIM_BASE_CATEGORY1, baseCat2.get("category1_id"), "info.name");
-                    Map<String, String> baseTm = service.getColumns(DATABASE, DIM_BASE_TRADEMARK, skuInfo.get("tm_id"), "info.tm_name");
-                    dim = new JSONObject();
-                    dim.put("sku_name", skuInfo.get("sku_name"));
-                    dim.put("spu_id", skuInfo.get("spu_id"));
-                    dim.put("spu_name", spuInfo.get("spu_name"));
-                    dim.put("tm_id", skuInfo.get("tm_id"));
-                    dim.put("tm_name", baseTm.get("tm_name"));
-                    dim.put("category1_id", baseCat2.get("category1_id"));
-                    dim.put("category1_name", baseCat1.get("name"));
-                    dim.put("category2_id", baseCat3.get("category2_id"));
-                    dim.put("category2_name", baseCat2.get("name"));
-                    dim.put("category3_id", skuInfo.get("category3_id"));
-                    dim.put("category3_name", baseCat3.get("name"));
-                    client.setex(skuId, 60 * 60 * 24, dim.toString());
-                }
-                res.add(TradeSkuOrderBean.builder()
-                        .startTime(row.getAs("startTime"))
-                        .endTime(row.getAs("endTime"))
-                        .skuId(skuId)
-                        .totalOrderPrice(row.getAs("total_order_price"))
-                        .totalSkuNum(row.getAs("total_sku_num"))
-                        .skuName(dim.getString("sku_name"))
-                        .spuId(dim.getString("spu_id"))
-                        .spuName(dim.getString("spu_name"))
-                        .trademarkId(dim.getString("tm_id"))
-                        .trademarkName(dim.getString("tm_name"))
-                        .category1Id(dim.getString("category1_id"))
-                        .category1Name(dim.getString("category1_name"))
-                        .category2Id(dim.getString("category2_id"))
-                        .category2Name(dim.getString("category2_name"))
-                        .category3Id(dim.getString("category3_id"))
-                        .category3Name(dim.getString("category3_name"))
-                        .build());
+                TradeSkuOrderBean bean = new TradeSkuOrderBean();
+                bean.setSkuId(skuId);
+                bean.setStartTime(row.getAs("startTime"));
+                bean.setEndTime(row.getAs("endTime"));
+                bean.setTotalSkuNum(row.getAs("total_sku_num"));
+                bean.setTotalOrderPrice(row.getAs("total_order_price"));
+
+                Map<String, String> info = getInfo(DIM_SKU_INFO, skuId, new String[]{"category3_id", "tm_id", "spu_id", "sku_name"}, client);
+                bean.setSkuName(info.get("sku_name"));
+                bean.setSpuId(info.get("spu_id"));
+                bean.setTrademarkId(info.get("tm_id"));
+                bean.setCategory3Id(info.get("category3_id"));
+
+                info = getInfo(DIM_SPU_INFO, skuId, new String[]{"spu_name"}, client);
+                bean.setSpuName(info.get("spu_name"));
+
+                info = getInfo(DIM_BASE_CATEGORY3, skuId, new String[]{"name", "category2_id"}, client);
+                bean.setCategory3Name(info.get("name"));
+                bean.setCategory2Id(info.get("category2_id"));
+
+                info = getInfo(DIM_BASE_CATEGORY2, skuId, new String[]{"name", "category1_id"}, client);
+                bean.setCategory2Name(info.get("name"));
+                bean.setCategory1Id(info.get("category1_id"));
+
+                info = getInfo(DIM_BASE_CATEGORY1, skuId, new String[]{"name"}, client);
+                bean.setCategory1Name(info.get("name"));
+
+                info = getInfo(DIM_BASE_TRADEMARK, skuId, new String[]{"tm_name"}, client);
+                bean.setTrademarkName(info.get("tm_name"));
+
+                res.add(bean);
             }
 
             HBaseConnectionUtil.closeConnection(conn);
@@ -117,5 +104,34 @@ public class TradeSkuOrderApp extends AppBase {
         }, Encoders.bean(TradeSkuOrderBean.class));
 
         data.show();
+    }
+
+    private Map<String, String> getInfo(String table, String id, String[] columns, Jedis client) {
+        Map<String, String> info;
+        String key = RedisUtil.getKey(table, id);
+        if (!client.exists(key)) {
+            if (conn == null) conn = HBaseConnectionUtil.newConnection();
+            HBaseService service = new HBaseService(conn);
+            info = service.getColumns(DATABASE, table, id, "info", columns);
+            client.hset(key, info);
+            client.expire(key, 24 * 60 * 60);
+        } else {
+            info = client.hgetAll(key);
+            boolean added = false;
+            for (String column : columns) {
+                if (!info.containsKey(column)) {
+                    if (conn == null) conn = HBaseConnectionUtil.newConnection();
+                    HBaseService service = new HBaseService(conn);
+                    String value = service.getColumn(DATABASE, table, id, "info", column);
+                    info.put(column, value);
+                    added = true;
+                }
+            }
+            if (added) {
+                client.hset(key, info);
+                client.expire(key, 24 * 60 * 60);
+            }
+        }
+        return info;
     }
 }

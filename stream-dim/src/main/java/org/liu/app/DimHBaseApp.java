@@ -13,7 +13,9 @@ import org.liu.common.app.AppBase;
 import org.liu.common.bean.dim.DimTableMeta;
 import org.liu.common.service.HBaseService;
 import org.liu.common.util.HBaseConnectionUtil;
+import org.liu.common.util.RedisUtil;
 import org.liu.common.util.StreamUtil;
+import redis.clients.jedis.Jedis;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -98,16 +100,20 @@ public class DimHBaseApp extends AppBase {
         df.foreachPartition(partition -> {
             ArrayList<Put> puts = new ArrayList<>();
             ArrayList<Delete> deletes = new ArrayList<>();
+            Jedis client = RedisUtil.getClient();
             while (partition.hasNext()) {
                 Row row = partition.next();
                 var type = (String) row.getAs("_type_");
                 var rowKey = (String) row.getAs(meta.rowKey);
+                String rKey = RedisUtil.getKey(meta.sinkTable, rowKey);
                 // We can also get old from CDC and update specific columns, which could be more efficient if updated column number is small
                 if ("delete".equals(type)) {
                     deletes.add(new Delete(Bytes.toBytes(rowKey)));
+                    client.del(rKey);
                 } else {
                     if ("update".equals(type)) {
                         deletes.add(new Delete(Bytes.toBytes(rowKey)));
+                        client.del(rKey);
                     }
                     String[] columnNames = row.schema().names();
                     for (String name : columnNames) {
