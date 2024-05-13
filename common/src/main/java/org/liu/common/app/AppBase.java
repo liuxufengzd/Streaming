@@ -13,13 +13,15 @@ import org.liu.common.util.StreamUtil;
 import java.io.Serializable;
 import java.util.concurrent.TimeoutException;
 
-import static org.liu.common.constant.Constant.DELTA_DB;
+import static org.liu.common.constant.Constant.*;
 
 public abstract class AppBase implements Serializable {
+    private SparkSession spark;
+
     public abstract void etl(SparkSession spark, String[] args);
 
     public void start(String[] args, int parallelism) {
-        SparkSession spark = SparkSession.builder()
+        spark = SparkSession.builder()
                 .appName("test")
                 .master("yarn")
                 .config("spark.sql.shuffle.partitions", parallelism)
@@ -45,7 +47,7 @@ public abstract class AppBase implements Serializable {
         }
     }
 
-    public Dataset<Row> kafkaStream(SparkSession spark, String topic) {
+    public Dataset<Row> kafkaStream(String topic) {
         return spark.readStream()
                 .format("kafka")
                 .option("kafka.bootstrap.servers", Constant.KAFKA_BOOTSTRAP_SERVERS)
@@ -55,7 +57,7 @@ public abstract class AppBase implements Serializable {
                 .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)");
     }
 
-    public Dataset<Row> deltaTableStream(SparkSession spark, String tableName) {
+    public Dataset<Row> deltaTableStream(String tableName) {
         return spark.readStream()
                 .format("delta")
                 .option("skipChangeCommits", "true") // Ignore any delete and update operations
@@ -64,13 +66,13 @@ public abstract class AppBase implements Serializable {
                 .table(getDeltaTableFullName(tableName));
     }
 
-    public Dataset<Row> deltaTable(SparkSession spark, String tableName) {
+    public Dataset<Row> deltaTable(String tableName) {
         return DeltaTable.forName(spark, getDeltaTableFullName(tableName)).toDF();
     }
 
     // Refresh static table with a constant frequency, which is suitable for slowly changed dataset
-    public Dataset<Row> deltaTable(SparkSession spark, String tableName, long refreshIntervalInMin) {
-        Dataset<Row> table = deltaTable(spark, tableName);
+    public Dataset<Row> deltaTable(String tableName, long refreshIntervalInMin) {
+        Dataset<Row> table = deltaTable(tableName);
         table.persist();
         try {
             spark.readStream()
@@ -80,7 +82,7 @@ public abstract class AppBase implements Serializable {
                     .load()
                     .writeStream()
                     .foreachBatch((e, id) -> {
-                        refreshTable(spark, table, tableName);
+                        refreshTable(table, tableName);
                     })
                     .queryName("Refresh-" + tableName)
                     .trigger(Trigger.ProcessingTime(refreshIntervalInMin * 60 * 1000))
@@ -91,9 +93,9 @@ public abstract class AppBase implements Serializable {
         return table;
     }
 
-    private void refreshTable(SparkSession spark, Dataset<Row> table, String tableName) {
+    private void refreshTable(Dataset<Row> table, String tableName) {
         table.unpersist();
-        table = deltaTable(spark, tableName);
+        table = deltaTable(tableName);
         table.persist();
     }
 
@@ -123,7 +125,32 @@ public abstract class AppBase implements Serializable {
         batchToDeltaTable(batch, layer, tableName, mode, dateColumn, false);
     }
 
-    public void deltaTableConsole(SparkSession spark, String tableName) {
+    public void streamToDorisTable(Dataset<Row> stream, String layer, String tableName) {
+        try {
+            stream.writeStream()
+                    .format("doris")
+                    .option("checkpointLocation", StreamUtil.getTableCheckpointPath(layer, tableName))
+                    .option("doris.table.identifier", DATABASE + "." + tableName)
+                    .option("doris.fenodes", DORIS_ENDPOINT)
+                    .option("user", DORIS_USERNAME)
+                    .option("password", DORIS_PWD)
+                    .start();
+        } catch (TimeoutException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void batchToDorisTable(Dataset<Row> stream, String layer, String tableName) {
+        stream.write()
+                .format("doris")
+                .option("doris.table.identifier", DATABASE + "." + tableName)
+                .option("doris.fenodes", DORIS_ENDPOINT)
+                .option("user", DORIS_USERNAME)
+                .option("password", DORIS_PWD)
+                .save();
+    }
+
+    public void deltaTableConsole(String tableName) {
         try {
             spark.readStream()
                     .format("delta")

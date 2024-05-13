@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 @Data
@@ -40,5 +41,5 @@ public class TradeSkuOrderBean {
 
     Timestamp startTime;
     Timestamp endTime;
-    String date;
+    Date date;
 }

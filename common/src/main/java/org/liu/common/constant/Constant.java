@@ -3,6 +3,9 @@ package org.liu.common.constant;
 public class Constant {
     public static final String WAREHOUSE_DIR = "hdfs://hadoop102:8020/user/lakehouse";
     public static final String METASTORE_URI = "thrift://hadoop102:9083";
+    public static final String DORIS_ENDPOINT = "hadoop104:7030";
+    public static final String DORIS_USERNAME = "root";
+    public static final String DORIS_PWD = "000000";
     public static final String PARTITION_OVERWRITE_MODE = "dynamic";
     public static final String ROCKSDB_STATE_STORE = "org.apache.spark.sql.execution.streaming.state.RocksDBStateStoreProvider";
     public static final String SPARK_EXTENSIONS = "io.delta.sql.DeltaSparkSessionExtension";

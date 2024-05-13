@@ -9,6 +9,7 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.streaming.GroupState;
 import org.apache.spark.sql.streaming.GroupStateTimeout;
 import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.types.DataTypes;
 import org.liu.common.app.AppBase;
 import org.liu.common.util.DateUtil;
 import org.liu.common.util.StreamUtil;
@@ -27,7 +28,7 @@ public class UserLoginApp extends AppBase {
 
     @Override
     public void etl(SparkSession spark, String[] args) {
-        Dataset<Row> source = deltaTableStream(spark, TOPIC_LOG_PAGE)
+        Dataset<Row> source = deltaTableStream(TOPIC_LOG_PAGE)
                 .filter("isnotnull(uid) AND isnotnull(ts) AND (isnull(last_page_id) OR last_page_id = 'login')")
                 .select("uid", "ts")
                 .withColumn("uuCt", lit(0))
@@ -42,9 +43,35 @@ public class UserLoginApp extends AppBase {
                 .agg(
                         sum("uuCt").as("uuCt"),
                         sum("backCt").as("backCt")
-                ).withColumn("date", date_format(col("window.end"), "yyyy-MM-dd"));
+                )
+                .withColumn("startTime", col("window.start").cast(DataTypes.StringType))
+                .withColumn("endTime", col("window.end").cast(DataTypes.StringType))
+                .withColumn("date", to_date(col("startTime"), "yyyy-MM-dd HH:mm:ss"))
+                .drop("window");
 
-        streamToDeltaTable(source, DWS_LAYER, DWS_USER_LOGIN, "date");
+        /*
+        create table if not exists gmall.dws_user_login
+        (
+            `startTime`   DATETIME,
+            `endTime`     DATETIME,
+            `date`        DATE NOT NULL,
+            `uuCt` BIGINT REPLACE,
+           `backCt` BIGINT REPLACE
+)
+        engine = olap
+        aggregate key (`startTime`,`endTime`,`date`)
+        partition by LIST(`date`)(
+        PARTITION `p20220608`  VALUES IN ("2022-06-08"),
+        PARTITION `p20220609`  VALUES IN ("2022-06-09"),
+        PARTITION `p20220610`  VALUES IN ("2022-06-10"),
+        PARTITION `p20220618`  VALUES IN ("2022-06-18")
+)
+        distributed by hash(`startTime`) buckets 10
+        properties (
+        "replication_num" = "1"
+        );
+         */
+        streamToDorisTable(source, DWS_LAYER, DWS_USER_LOGIN);
     }
 
     private Iterator<Row> stateHandler(String uid, Iterator<Row> rows, GroupState<String> lastLoginDate) {

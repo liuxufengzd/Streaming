@@ -34,7 +34,7 @@ public class DimHBaseApp extends AppBase {
 
     @Override
     public void etl(SparkSession spark, String[] args) {
-        Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
+        Dataset<Row> source = kafkaStream(TOPIC_DB);
         try {
             source.writeStream()
                     .option("checkpointLocation", StreamUtil.getTableCheckpointPath(DIM_LAYER, TOPIC_DB + "_hbase"))
@@ -47,7 +47,7 @@ public class DimHBaseApp extends AppBase {
     }
 
     private void process(SparkSession spark, Dataset<Row> src) {
-        Dataset<Row> dimProcess = deltaTable(spark, DIM_PROCESS_TABLE)
+        Dataset<Row> dimProcess = deltaTable(DIM_PROCESS_TABLE)
                 .filter(col(DIM_PROCESS_TO_HBASE).notEqual(0));
 
         // Parse and filter dimensional table source

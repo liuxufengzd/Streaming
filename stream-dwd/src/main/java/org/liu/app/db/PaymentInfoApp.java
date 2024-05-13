@@ -27,7 +27,7 @@ public class PaymentInfoApp extends AppBase {
 
     @Override
     public void etl(SparkSession spark, String[] args) {
-        Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
+        Dataset<Row> source = kafkaStream(TOPIC_DB);
 
         // Data cleanse and transform
         Dataset<Row> paymentInfo = source.select(from_json(col("value"), new TopicMeta("PaymentInfo").getSchema()).as("columns"))
@@ -39,8 +39,8 @@ public class PaymentInfoApp extends AppBase {
 
         // Join order detail table and base_dic/user_info table to enrich columns
         // Business: which order contributes to payment? order_time <= payment_time <= order_time + 15 minutes
-        Dataset<Row> baseDic = deltaTable(spark, DIM_BASE_DIC).filter("parent_code = 11").select("dic_code", "dic_name");
-        Dataset<Row> orderDetail = deltaTableStream(spark, DWD_ORDER_DETAIL)
+        Dataset<Row> baseDic = deltaTable(DIM_BASE_DIC).filter("parent_code = 11").select("dic_code", "dic_name");
+        Dataset<Row> orderDetail = deltaTableStream(DWD_ORDER_DETAIL)
                 .select("order_id", "create_time", "sku_id", "province_id", "activity_id", "activity_rule_id", "coupon_id", "sku_name", "order_price", "sku_num", "split_total_amount", "split_activity_amount", "split_coupon_amount")
                 .withColumnRenamed("order_id", "id")
                 .withWatermark("create_time", "1 minute");

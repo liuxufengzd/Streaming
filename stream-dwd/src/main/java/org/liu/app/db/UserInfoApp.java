@@ -16,7 +16,7 @@ public class UserInfoApp extends AppBase {
 
     @Override
     public void etl(SparkSession spark, String[] args) {
-        Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
+        Dataset<Row> source = kafkaStream(TOPIC_DB);
 
         source = source
                 .select(from_json(col("value"), new TopicMeta("UserInfo").getSchema()).as("columns"))

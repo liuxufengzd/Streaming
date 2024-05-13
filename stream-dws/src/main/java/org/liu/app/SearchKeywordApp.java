@@ -3,6 +3,7 @@ package org.liu.app;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
 import org.liu.common.app.AppBase;
 import org.liu.udf.SentenceSplit;
 
@@ -18,7 +19,7 @@ public class SearchKeywordApp extends AppBase {
     @Override
     public void etl(SparkSession spark, String[] args) {
         // Ingest streaming source from delta table
-        Dataset<Row> source = deltaTableStream(spark, TOPIC_LOG_PAGE);
+        Dataset<Row> source = deltaTableStream(TOPIC_LOG_PAGE);
 
         // Data cleanse and transform
         source = source
@@ -37,9 +38,34 @@ public class SearchKeywordApp extends AppBase {
                         window(col("ts"), "10 seconds"),
                         col("keyword")
                 ).count()
-                .withColumn("date", date_format(col("window.end"), "yyyy-MM-dd"));
+                .withColumn("startTime", col("window.start").cast(DataTypes.StringType))
+                .withColumn("endTime", col("window.end").cast(DataTypes.StringType))
+                .withColumn("date", to_date(col("startTime"), "yyyy-MM-dd HH:mm:ss"))
+                .drop("window");
 
-        // Write to delta table
-        streamToDeltaTable(source, DWS_LAYER, DWS_SEARCH_KEYWORD_COUNT, "date");
+        // Write to doris table
+        /*
+        create table if not exists gmall.dws_search_keyword_count
+        (
+            `startTime`   DATETIME,
+            `endTime`     DATETIME,
+            `date`        DATE NOT NULL,
+            `keyword`  VARCHAR(100),
+            `count` BIGINT REPLACE
+        )
+        engine = olap
+        aggregate key (`startTime`,`endTime`,`date`,`keyword`)
+        partition by LIST(`date`)(
+        PARTITION `p20220608`  VALUES IN ("2022-06-08"),
+        PARTITION `p20220609`  VALUES IN ("2022-06-09"),
+        PARTITION `p20220610`  VALUES IN ("2022-06-10"),
+        PARTITION `p20220618`  VALUES IN ("2022-06-18")
+        )
+        distributed by hash(`keyword`) buckets 10
+        properties (
+        "replication_num" = "1"
+        );
+         */
+        streamToDorisTable(source, DWS_LAYER, DWS_SEARCH_KEYWORD_COUNT);
     }
 }

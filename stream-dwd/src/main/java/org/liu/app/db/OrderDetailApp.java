@@ -17,7 +17,7 @@ public class OrderDetailApp extends AppBase {
     @Override
     public void etl(SparkSession spark, String[] args) {
         // Ingest streaming source from kafka
-        Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
+        Dataset<Row> source = kafkaStream(TOPIC_DB);
 
         // Split out required table data and set watermarks to limit event delay(transmit time from source to spark engine)
         String watermark = "1 minute";

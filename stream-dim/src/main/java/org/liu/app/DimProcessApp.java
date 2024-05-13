@@ -22,7 +22,7 @@ public class DimProcessApp extends AppBase {
     @Override
     public void etl(SparkSession spark, String[] args) {
         // Actually we can make maxwell monitor table groups for different topics to avoid trigger running too frequently
-        Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
+        Dataset<Row> source = kafkaStream(TOPIC_DB);
 
         // Define raw log schema
         var dataSchema = new StructType()

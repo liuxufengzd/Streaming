@@ -27,7 +27,7 @@ public class DimDeltaApp extends AppBase {
 
     @Override
     public void etl(SparkSession spark, String[] args) {
-        Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
+        Dataset<Row> source = kafkaStream(TOPIC_DB);
         try {
             source.writeStream()
                     .option("checkpointLocation", StreamUtil.getTableCheckpointPath(DIM_LAYER, TOPIC_DB + "_delta"))
@@ -42,7 +42,7 @@ public class DimDeltaApp extends AppBase {
     private void process(SparkSession spark, Dataset<Row> src) {
         // Fetch whole dim_process table to ensure each micro batch can reference latest table
         // We can also control the frequency of fetching if dim_process is slowly changed and lenient requirement to save resource
-        Dataset<Row> dimProcess = deltaTable(spark, DIM_PROCESS_TABLE)
+        Dataset<Row> dimProcess = deltaTable(DIM_PROCESS_TABLE)
                 .filter(col(DIM_PROCESS_TO_HBASE).equalTo(0));
 
         // Parse and filter dimensional table source

@@ -9,6 +9,7 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.streaming.GroupState;
 import org.apache.spark.sql.streaming.GroupStateTimeout;
 import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.types.DataTypes;
 import org.liu.common.app.AppBase;
 import org.liu.common.util.DateUtil;
 import org.liu.common.util.StreamUtil;
@@ -28,7 +29,7 @@ public class TrafficVcChArIsNewPageViewApp extends AppBase {
     @Override
     public void etl(SparkSession spark, String[] args) {
         // Ingest streaming source from delta table
-        Dataset<Row> source = deltaTableStream(spark, TOPIC_LOG_PAGE)
+        Dataset<Row> source = deltaTableStream(TOPIC_LOG_PAGE)
                 .select("mid", "last_page_id", "ar", "ch", "vc", "is_new", "ts", "during_time")
                 .withColumn("uv", lit(0))
                 .withColumn("sv", lit(0))
@@ -51,10 +52,40 @@ public class TrafficVcChArIsNewPageViewApp extends AppBase {
                         sum("uv").as("uvCt"),
                         sum("sv").as("svCt"),
                         sum("during_time").as("durSum"))
-                .withColumn("date", date_format(col("window.end"), "yyyy-MM-dd"));
+                .withColumn("startTime", col("window.start").cast(DataTypes.StringType))
+                .withColumn("endTime", col("window.end").cast(DataTypes.StringType))
+                .withColumn("date", to_date(col("startTime"), "yyyy-MM-dd HH:mm:ss"))
+                .drop("window");
 
-        // Write to delta table
-        streamToDeltaTable(source, DWS_LAYER, DWS_TRAFFIC_PAGE_VIEW_COUNT, "date");
+        /*
+        create table if not exists gmall.dws_traffic_page_view_count
+        (
+            `startTime`   DATETIME,
+            `endTime`     DATETIME,
+            `date`        DATE NOT NULL,
+            `ar` VARCHAR(100),
+            `ch` VARCHAR(100),
+            `vc` VARCHAR(100),
+            `is_new` VARCHAR(100),
+           `pvCt` BIGINT REPLACE,
+           `uvCt` BIGINT REPLACE,
+           `svCt` BIGINT REPLACE,
+           `durSum` DOUBLE REPLACE
+)
+        engine = olap
+        aggregate key (`startTime`,`endTime`,`date`,`ar`,`ch`,`vc`,`is_new`)
+        partition by LIST(`date`)(
+        PARTITION `p20220608`  VALUES IN ("2022-06-08"),
+        PARTITION `p20220609`  VALUES IN ("2022-06-09"),
+        PARTITION `p20220610`  VALUES IN ("2022-06-10"),
+        PARTITION `p20220618`  VALUES IN ("2022-06-18")
+)
+        distributed by hash(`startTime`) buckets 10
+        properties (
+        "replication_num" = "1"
+        );
+         */
+        streamToDorisTable(source, DWS_LAYER, DWS_TRAFFIC_PAGE_VIEW_COUNT);
     }
 
     private Iterator<Row> stateHandler(String mid, Iterator<Row> rows, GroupState<String> lastVisitDate) {

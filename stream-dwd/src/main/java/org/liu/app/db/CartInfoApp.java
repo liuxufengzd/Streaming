@@ -19,7 +19,7 @@ public class CartInfoApp extends AppBase {
     @Override
     public void etl(SparkSession spark, String[] args) {
         // Ingest streaming source from kafka
-        Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
+        Dataset<Row> source = kafkaStream(TOPIC_DB);
 
         // Data cleanse and transform
         source.select(from_json(col("value"), new TopicMeta("CartInfo").getSchema()).as("columns"))

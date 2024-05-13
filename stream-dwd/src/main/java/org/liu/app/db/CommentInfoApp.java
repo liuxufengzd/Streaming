@@ -17,7 +17,7 @@ public class CommentInfoApp extends AppBase {
     @Override
     public void etl(SparkSession spark, String[] args) {
         // Ingest source data
-        Dataset<Row> source = kafkaStream(spark, TOPIC_DB);
+        Dataset<Row> source = kafkaStream(TOPIC_DB);
 
         // Filter out unneeded data
         source = source.select(from_json(col("value"), new TopicMeta("CommentInfo").getSchema()).as("columns"))
@@ -25,7 +25,7 @@ public class CommentInfoApp extends AppBase {
                 .select("columns.data.*");
 
         // Enrich source with dimensional table. Small static table can be loaded for each micro batch
-        Dataset<Row> baseDic = deltaTable(spark, DIM_BASE_DIC)
+        Dataset<Row> baseDic = deltaTable(DIM_BASE_DIC)
                 .filter("parent_code = 12")
                 .select("dic_code", "dic_name");
         baseDic.persist();

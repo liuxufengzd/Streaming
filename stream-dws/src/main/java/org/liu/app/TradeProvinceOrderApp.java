@@ -11,6 +11,7 @@ import org.liu.common.util.RedisUtil;
 import org.liu.common.util.StreamUtil;
 import redis.clients.jedis.Jedis;
 
+import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class TradeProvinceOrderApp extends AppBase {
 
     @Override
     public void etl(SparkSession spark, String[] args) {
-        Dataset<Row> source = deltaTableStream(spark, DWD_ORDER_DETAIL)
+        Dataset<Row> source = deltaTableStream(DWD_ORDER_DETAIL)
                 .select("order_id", "province_id", "order_price", "create_time")
                 .na().drop(new String[]{"province_id", "order_id", "create_time"});
 
@@ -69,7 +70,7 @@ public class TradeProvinceOrderApp extends AppBase {
                 bean.setProvinceId(provinceId);
                 bean.setStartTime(row.getAs("startTime"));
                 bean.setEndTime(row.getAs("endTime"));
-                bean.setDate(new SimpleDateFormat("yyyy-MM-dd").format(bean.getEndTime()));
+                bean.setDate(Date.valueOf(new SimpleDateFormat("yyyy-MM-dd").format(bean.getEndTime())));
                 bean.setTotalOrderNum(row.getAs("total_order_num"));
                 bean.setTotalOrderPrice(row.getAs("total_order_price"));
                 bean.setProvinceName(info.get("name"));
@@ -84,12 +85,35 @@ public class TradeProvinceOrderApp extends AppBase {
         }, Encoders.bean(TradeProvinceOrderBean.class));
 
         if (!data.isEmpty()) {
-            data.write().format("delta")
-                    .mode(SaveMode.Append)
-                    .partitionBy("date")
-                    .option("path", StreamUtil.getTablePath(DWS_LAYER, DWS_TRADE_PROVINCE_ORDER))
-                    .saveAsTable(DELTA_DB + "." + DWS_TRADE_PROVINCE_ORDER);
-            data.show();
+            /*
+            create table if not exists gmall.dws_trade_province_order
+            (
+                `startTime`   DATETIME,
+                `endTime`     DATETIME,
+                `date`        DATE NOT NULL,
+                `provinceId` VARCHAR(10),
+                `provinceName` VARCHAR(100),
+                `totalOrderNum` BIGINT REPLACE,
+                `totalOrderPrice` DOUBLE REPLACE
+            )
+                engine = olap
+                aggregate key (`startTime`,`endTime`,`date`,`provinceId`,`provinceName`)
+                partition by LIST(`date`)(
+                PARTITION `p20220609`  VALUES IN ("2022-06-09"),
+                PARTITION `p20220610`  VALUES IN ("2022-06-10")
+            )
+                distributed by hash(`startTime`) buckets 10
+                properties (
+                "replication_num" = "1"
+                );
+             */
+            data.write()
+                    .format("doris")
+                    .option("doris.table.identifier", DATABASE + "." + DWS_TRADE_PROVINCE_ORDER)
+                    .option("doris.fenodes", DORIS_ENDPOINT)
+                    .option("user", DORIS_USERNAME)
+                    .option("password", DORIS_PWD)
+                    .save();
         }
     }
 

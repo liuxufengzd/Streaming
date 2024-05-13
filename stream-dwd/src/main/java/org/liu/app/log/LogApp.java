@@ -31,7 +31,7 @@ public class LogApp extends AppBase {
     @Override
     public void etl(SparkSession spark, String[] args) {
         // Import streaming data from kafka
-        Dataset<Row> source = kafkaStream(spark, TOPIC_LOG);
+        Dataset<Row> source = kafkaStream(TOPIC_LOG);
 
         // Parse data and filter out bad events
         StructType schema = new TopicMeta("TopicLog").getSchema();

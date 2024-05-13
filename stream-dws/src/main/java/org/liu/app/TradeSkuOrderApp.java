@@ -11,6 +11,7 @@ import org.liu.common.util.RedisUtil;
 import org.liu.common.util.StreamUtil;
 import redis.clients.jedis.Jedis;
 
+import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class TradeSkuOrderApp extends AppBase {
 
     @Override
     public void etl(SparkSession spark, String[] args) {
-        Dataset<Row> source = deltaTableStream(spark, DWD_ORDER_DETAIL)
+        Dataset<Row> source = deltaTableStream(DWD_ORDER_DETAIL)
                 .select("sku_id", "sku_name", "sku_num", "order_price", "create_time")
                 .na().drop(new String[]{"sku_id", "create_time"});
 
@@ -67,7 +68,7 @@ public class TradeSkuOrderApp extends AppBase {
                 bean.setSkuId(skuId);
                 bean.setStartTime(row.getAs("startTime"));
                 bean.setEndTime(row.getAs("endTime"));
-                bean.setDate(new SimpleDateFormat("yyyy-MM-dd").format(bean.getEndTime()));
+                bean.setDate(Date.valueOf(new SimpleDateFormat("yyyy-MM-dd").format(bean.getEndTime())));
                 bean.setTotalSkuNum(row.getAs("total_sku_num"));
                 bean.setTotalOrderPrice(row.getAs("total_order_price"));
 
@@ -104,11 +105,45 @@ public class TradeSkuOrderApp extends AppBase {
         }, Encoders.bean(TradeSkuOrderBean.class));
 
         if (!data.isEmpty()) {
-            data.write().format("delta")
-                    .mode(SaveMode.Append)
-                    .partitionBy("date")
-                    .option("path", StreamUtil.getTablePath(DWS_LAYER, DWS_TRADE_SKU_ORDER))
-                    .saveAsTable(DELTA_DB + "." + DWS_TRADE_SKU_ORDER);
+            /*
+            create table if not exists gmall.dws_trade_sku_order
+            (
+                `startTime`   DATETIME,
+                `endTime`     DATETIME,
+                `date`        DATE NOT NULL,
+                `skuId` VARCHAR(100),
+                `skuName` VARCHAR(100),
+                `spuId` VARCHAR(100),
+                `spuName` VARCHAR(100),
+                `trademarkId` VARCHAR(100),
+                `trademarkName` VARCHAR(100),
+                `category1Id` VARCHAR(100),
+                `category1Name` VARCHAR(100),
+                `category2Id` VARCHAR(100),
+                `category2Name` VARCHAR(100),
+                `category3Id` VARCHAR(100),
+                `category3Name` VARCHAR(100),
+                `totalSkuNum` BIGINT REPLACE,
+                `totalOrderPrice` DOUBLE REPLACE
+            )
+                engine = olap
+                aggregate key (`startTime`,`endTime`,`date`,`skuId`,`skuName`,`spuId`,`spuName`,`trademarkId`,`trademarkName`,`category1Id`,`category1Name`,`category2Id`,`category2Name`,`category3Id`,`category3Name`)
+                partition by LIST(`date`)(
+                PARTITION `p20220609`  VALUES IN ("2022-06-09"),
+                PARTITION `p20220610`  VALUES IN ("2022-06-10")
+            )
+                distributed by hash(`startTime`) buckets 10
+                properties (
+                    "replication_num" = "1"
+                );
+             */
+            data.write()
+                    .format("doris")
+                    .option("doris.table.identifier", DATABASE + "." + DWS_TRADE_SKU_ORDER)
+                    .option("doris.fenodes", DORIS_ENDPOINT)
+                    .option("user", DORIS_USERNAME)
+                    .option("password", DORIS_PWD)
+                    .save();
         }
     }
 
