@@ -15,6 +15,7 @@ import org.liu.common.util.DateUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.concurrent.TimeoutException;
 
 import static org.apache.spark.sql.functions.*;
 import static org.liu.common.constant.Constant.*;
@@ -54,23 +55,7 @@ public class TradeCartAddApp extends AppBase {
         engine = olap
         aggregate key (`startTime`,`endTime`,`date`)
         partition by LIST(`date`)(
-        PARTITION `p20220604`  VALUES IN ("2022-06-04"),
-        PARTITION `p20220605`  VALUES IN ("2022-06-05"),
-        PARTITION `p20220606`  VALUES IN ("2022-06-06"),
-        PARTITION `p20220607`  VALUES IN ("2022-06-07"),
-        PARTITION `p20220608`  VALUES IN ("2022-06-08"),
-        PARTITION `p20220609`  VALUES IN ("2022-06-09"),
-        PARTITION `p20220610`  VALUES IN ("2022-06-10"),
-        PARTITION `p20220611`  VALUES IN ("2022-06-11"),
-        PARTITION `p20220612`  VALUES IN ("2022-06-12"),
-        PARTITION `p20220613`  VALUES IN ("2022-06-13"),
-        PARTITION `p20220614`  VALUES IN ("2022-06-14"),
-        PARTITION `p20220615`  VALUES IN ("2022-06-15"),
-        PARTITION `p20220616`  VALUES IN ("2022-06-16"),
-        PARTITION `p20220617`  VALUES IN ("2022-06-17"),
-        PARTITION `p20220618`  VALUES IN ("2022-06-18"),
-        PARTITION `p20220619`  VALUES IN ("2022-06-19"),
-        PARTITION `p20220619`  VALUES IN ("2022-06-20")
+            PARTITION `p20220608`  VALUES IN ("2022-06-08")
         )
         distributed by hash(`startTime`) buckets 10
         properties (

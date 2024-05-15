@@ -6,6 +6,8 @@ import org.apache.spark.sql.SparkSession;
 import org.liu.bean.TopicMeta;
 import org.liu.common.app.AppBase;
 
+import java.util.concurrent.TimeoutException;
+
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.from_json;
 import static org.liu.common.constant.Constant.*;
