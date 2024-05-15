@@ -9,14 +9,12 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.streaming.GroupState;
 import org.apache.spark.sql.streaming.GroupStateTimeout;
 import org.apache.spark.sql.streaming.OutputMode;
-import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.liu.common.app.AppBase;
 import org.liu.common.util.DateUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.concurrent.TimeoutException;
 
 import static org.apache.spark.sql.functions.*;
 import static org.liu.common.constant.Constant.*;

@@ -1,7 +1,7 @@
 package org.liu.accumulator;
 
 import org.apache.spark.util.AccumulatorV2;
-import org.liu.common.bean.dim.DimTableMeta;
+import org.liu.common.bean.DimTableMeta;
 
 import java.util.HashMap;
 import java.util.Map;

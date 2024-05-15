@@ -64,6 +64,7 @@ public class PaymentInfoApp extends AppBase {
                                 .withColumn("date", date_format(col("payment_time"), "yyyy-MM-dd"));
 
                         // user_info is too large and changing quickly, so HBase is a good choice to randomly fetch record
+                        // We can also add redis for caching to save resource and reduce latency
                         src = src.mapPartitions((MapPartitionsFunction<Row, Row>) partition -> {
                             Connection conn = HBaseConnectionUtil.newConnection();
                             HBaseService service = new HBaseService(conn);

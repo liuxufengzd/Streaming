@@ -8,7 +8,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.StructType;
 import org.liu.accumulator.DimProcessAccumulator;
 import org.liu.common.app.AppBase;
-import org.liu.common.bean.dim.DimTableMeta;
+import org.liu.common.bean.DimTableMeta;
 import org.liu.common.util.StreamUtil;
 
 import java.util.AbstractMap;

@@ -1,4 +1,4 @@
-package org.liu.common.bean.dim;
+package org.liu.common.bean;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

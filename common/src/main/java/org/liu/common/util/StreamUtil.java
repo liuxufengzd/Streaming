@@ -7,7 +7,7 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.MapType;
 import org.apache.spark.sql.types.StructType;
 import org.json.JSONArray;
-import org.liu.common.bean.dim.DimTableMeta;
+import org.liu.common.bean.DimTableMeta;
 
 import java.util.HashMap;
 import java.util.Map;
